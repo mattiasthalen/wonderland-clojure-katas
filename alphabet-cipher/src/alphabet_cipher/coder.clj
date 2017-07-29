@@ -3,10 +3,12 @@
 
 ;convert the char to int
 (defn char-to-int [c]
+  ;convert to int, then subtract 97 to move from ascii range to 0-25
   (- (int c) 97))
 
 ;convert int to char
 (defn int-to-char [i]
+  ;add 97 to int to move to ascii range, then convert it to char
   (char (+ i 97)))
 
 ;define encode function to encode the message using a keyword
@@ -20,7 +22,7 @@
     
     ;leverage ints against each other and spit out the encoded message
     (->>
-      ;sum int by int
+      ;sum message- int & keyword-int
       (map + message-int keyword-int)
       ;mod the result
       (map #(mod % 26) ,,,)
@@ -31,26 +33,16 @@
 
 ;define decode function to decode the message using a keyword
 (defn decode [keyword message]
-  (let [ ;convert the string into a list of ints
-         str-to-ints (fn [s]
-                       (->>
-                         ;make the string a list of literals
-                         (seq s)
-                         ;map the literals to int
-                         (map int ,,,)
-                         ;subtract 97 to make the range 0-25
-                         (map #(- % 97) ,,,)))
-         
-         ;repeat keyword
+  (let [ ;repeat keyword
          repeated-keyword (apply str (repeat (Math/ceil (/ (count message) (count keyword))) keyword))
          ;convert repeated-keyword to ints
          keyword-int (map char-to-int (seq repeated-keyword))
          ;convert message to ints
          message-int (map char-to-int (seq message))]
-
+    
     ;leverage ints against each other and spit out the decoded message
     (->>
-      ;sub int by int
+      ;subtract message-int by keyword-int
       (map - message-int keyword-int)
       ;mod the result
       (map #(mod % 26) ,,,)
@@ -63,7 +55,8 @@
 (defn decipher [cipher message]
   (let [ ;decode to keyword string
          key-string (decode message cipher)]
-    ;iterate through cipher to find keyword
+    
+    ;iterate through key-string to find keyword
     (loop [i 1]
       ;set keyword from 0 to current iteration
       (let [keyword (subs key-string 0 i)]
