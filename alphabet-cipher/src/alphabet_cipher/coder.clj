@@ -1,67 +1,70 @@
 (require '[clojure.string :as str])
 (ns alphabet-cipher.coder)
 
-;convert all chars to int 0-25
-(defn str-to-ints [s]
-  ;map to ascii int, moved to 0-25 range
-  (map (fn [x] (- (int x) 97))
-    ;convert string to literal list
-    (seq (char-array s))))
-
-;convert 0-25 to char
-(defn int-to-char [x]
-  (char (+ x 97)))
-
-;sum both letters and mod the result
-(defn sum-and-mod [x y]
-  (mod (+ x y) 26))
-
-;repeat a until its equal or longer than b
-(defn repeat-str [a b]
-  (apply str
-         (repeat
-           (Math/ceil
-             (/ (count b) (count a)))
-           a)))
-
 (defn encode [keyword message]
-  (let [
-         ;repeat keyword 
-         repeated-keyword (repeat-str keyword message)
+  (let [ ;convert the string into a list of ints
+         str-to-ints (fn [s]
+                       (->>
+                         ;make the string a list of literals
+                         (seq s)
+                         ;map the literals to int
+                         (map int ,,,)
+                         ;subtract 97 to make the range 0-25
+                         (map #(- % 97) ,,,)))
+         
+         ;repeat keyword
+         repeated-keyword (apply str (repeat (Math/ceil (/ (count message) (count keyword))) keyword))
          ;convert repeated-keyword to ints
          keyword-int (str-to-ints repeated-keyword)
-         ;convert message  to ints
-         message-int (str-to-ints message)
-         ]
-    ;map using sum-and-mod
-    (apply str
-           (map int-to-char
-                (map sum-and-mod message-int keyword-int)))))
+         ;convert message to ints
+         message-int (str-to-ints message)]
 
-(defn decode [keyword message]()
-  (let [
-         ;repeat keyword 
-         repeated-keyword (repeat-str keyword message)
+    (->>
+      ;sum int by int
+      (map + message-int keyword-int)
+      ;mod the result
+      (map #(mod % 26) ,,,)
+      ;add 97 to map to ascii
+      (map #(+ 97 %) ,,,)
+      ;convert to char
+      (map char ,,,)
+      ;conver to string
+      (apply str ,,,))))
+
+(defn decode [keyword message]
+  (let [ ;convert the string into a list of ints
+         str-to-ints (fn [s]
+                       (->>
+                         ;make the string a list of literals
+                         (seq s)
+                         ;map the literals to int
+                         (map int ,,,)
+                         ;subtract 97 to make the range 0-25
+                         (map #(- % 97) ,,,)))
+         
+         ;repeat keyword
+         repeated-keyword (apply str (repeat (Math/ceil (/ (count message) (count keyword))) keyword))
          ;convert repeated-keyword to ints
          keyword-int (str-to-ints repeated-keyword)
-         ;convert message  to ints
-         message-int (str-to-ints message)
-         ]
-    ;map using sum-and-mod
-    (apply str
-           (map int-to-char
-                (map sum-and-mod message-int keyword-int)))))
+         ;convert message to ints
+         message-int (str-to-ints message)]
+
+    (->>
+      ;sub int by int
+      (map - message-int keyword-int)
+      ;mod the result
+      (map #(mod % 26) ,,,)
+      ;add 97 to map to ascii
+      (map #(+ 97 %) ,,,)
+      ;convert to char
+      (map char ,,,)
+      ;conver to string
+      (apply str ,,,))))
 
 (defn decipher [cipher message]
-  (let [
-         ;repeat keyword 
-         repeated-keyword (repeat-str cipher message)
-         ;convert repeated-keyword to ints
-         keyword-int (str-to-ints repeated-keyword)
-         ;convert message  to ints
-         message-int (str-to-ints message)
-         ]
-    ;map using sum-and-mod
-    (apply str
-           (map int-to-char
-                (map sum-and-mod message-int keyword-int)))))
+  (let [ ;decode to keyword string
+         key-string (decode message cipher)]
+    (loop [i 1]
+      (if (= (encode (subs key-string 0 i) message) cipher)
+        (subs key-string 0 i)
+        (recur (inc i))))))
