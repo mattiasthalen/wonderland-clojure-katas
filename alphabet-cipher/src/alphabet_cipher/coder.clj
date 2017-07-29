@@ -29,7 +29,7 @@
       ;convert ints to string
       (map int-to-char ,,,)
       ;make string from list
-      (apply str))))
+      (apply str ,,,))))
 
 ;define decode function to decode the message using a keyword
 (defn decode [keyword message]
@@ -49,7 +49,7 @@
       ;convert ints to string
       (map int-to-char ,,,)
       ;make string from list
-      (apply str))))
+      (apply str ,,,))))
 
 ;define decipher funtion to find the keyword used for encoding
 (defn decipher [cipher message]
