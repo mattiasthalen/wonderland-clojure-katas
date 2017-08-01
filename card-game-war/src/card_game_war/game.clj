@@ -23,78 +23,65 @@
 
 ;which hand wins?
 (defn play-round [player1-card player2-card]
-  (let [ ;get rank of player 1's card value
-         p1-val-rank (.indexOf ranks (get player1-card 1))
-         ;get rank of player 2's card value
-         p2-val-rank (.indexOf ranks (get player2-card 1))
-         ;get rank of player 1's card suit
-         p1-suit-rank (.indexOf suits (get player1-card 0))
-         ;get rank of player 2's card suit
-         p2-suit-rank (.indexOf suits (get player2-card 0))]
+  (let [ ;get scores for card
+         rank-score (fn [card] (.indexOf ranks (last card)))
+         suit-score (fn [card] (.indexOf suits (first card)))
+         
+         ;get score of player 1's card
+         p1-rank-score (rank-score player1-card)
+         p1-suit-score (suit-score player1-card)
+         
+         ;get score of player 2's card
+         p2-rank-score (rank-score player2-card)
+         p2-suit-score (suit-score player2-card)]
+    
     ;Return winner
-    (cond
-      ;if p1-val rank is higher, p1 wins
-      (> p1-val-rank p2-val-rank) player1-card
-      ;if p2-val rank is higher, p2 wins
-      (< p1-val-rank p2-val-rank) player2-card
-      ;if none is higher, check the suits
-      :else (cond
-              ;if p1-suit rank is higher, p1 wins
-              (> p1-suit-rank p2-suit-rank) player1-card
-               ;if p2-suit rank is higher, p2 wins
-              (< p1-suit-rank p2-suit-rank) player2-card
-              :else "same card!"))))
+    ;check if the cards have the same rank
+    (if (= p1-rank-score p2-rank-score)
+      ;if they do, check the suit score
+      (if (> p1-suit-score p2-suit-score) 0 1)
+      ;if not, who has the highest rank
+      (if (> p1-rank-score p2-rank-score) 0 1))))
 
 ;play the game!
 (defn play-game [player1-cards player2-cards]
-  (let [ ;setup p1 hand
-         p1-hand (atom player1-cards)
-         
-         ;setup p2 hand
-         p2-hand (atom player2-cards)]
+  ;loop until someone runs out of cards
+  (loop [ ;setup hands - reverse to make use of conj later on
+         player1-hand (reverse player1-cards)
+         player2-hand (reverse player2-cards)]
     
-    ;iterate through hands while both still have cards
-    (while (every? false? [(empty? @p1-hand) (empty? @p2-hand)])
-      (if
-        ;check if player 1 won the round
-        (= (play-round (last @p1-hand) (last @p2-hand)) (last @p1-hand))
-        
-        ;player 1 gets cards
-        (do
-          ;add cards to player 1's hand
-          (reset! p1-hand
-                  (->
-                    ;get all cards but the last one
-                    (butlast @p1-hand)
-                    
-                    ;add the winning card
-                    (conj ,,, (last @p1-hand))
-                    
-                    ;add the loosing card
-                    (conj ,,, (last @p2-hand))))
+    ;stop if someone is out of cards
+    (cond
+      ;announce player1 as winner it player2's is empty
+      (empty? player2-hand) 0
+      ;announce player2 as winner it player1's is empty
+      (empty? player1-hand) 1
+      
+      ;else keep goint 
+      :else (let [ ;winner
+                   winner (play-round player1-hand player2-hand)
+                   
+                   ;define winning hands
+                   player1-winning-hand (->
+                                          ;grab all cards, skipping the last one, since it will be moved
+                                          (butlast player1-hand)
+                                          
+                                          ;add the cards that was just played
+                                          (conj ,,, (last player1-hand))
+                                          (conj ,,, (last player2-hand)))
 
-          ;remove card from player 2's hand
-          (swap! p2-hand drop-last))
-        
-        ;else player 2 gets cards
-        (do
-          ;add cards to player 2's hand
-          (reset! p2-hand
-                  (->
-                    ;get all cards but the last one
-                    (butlast @p2-hand)
-                    
-                    ;add the winning card
-                    (conj ,,, (last @p2-hand))
-                    
-                    ;add the loosing card
-                    (conj ,,, (last @p1-hand))))
-          
-          ;remove card from player 1's hand
-          (swap! p1-hand drop-last))))
-        
-    ;announce winner
-    (if
-      (empty? @p2-hand)
-      "Player 1"
-      "Player 2")))
+                   player2-winning-hand (->
+                                          ;grab all cards, skipping the last one, since it will be moved
+                                          (butlast player2-hand)
+                                          
+                                          ;add the cards that was just played
+                                          (conj ,,, (last player2-hand))
+                                          (conj ,,, (last player1-hand)))]
+              
+              ;check who won the round
+              (if (= winner 0)
+                ;loop with player1 as winner
+                (recur player1-winning-hand (butlast player2-hand))
+                
+                ;loop with player2 as winner
+                (recur (butlast player1-hand) player2-winning-hand))))))

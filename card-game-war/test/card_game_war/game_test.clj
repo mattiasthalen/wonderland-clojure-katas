@@ -6,21 +6,27 @@
 ;; fill in  tests for your game
 (deftest test-play-round
   (testing "the highest rank wins the cards in the round")
-    (is (= [:spade 10] (play-round [:spade 10] [:club 2])))
+    (is (= 0 (play-round [:spade 10] [:club 2])))
   (testing "queens are higher rank than jacks")
-    (is (= [:spade :queen] (play-round [:spade :queen] [:club :jack])))
+    (is (= 0 (play-round [:spade :queen] [:club :jack])))
   (testing "kings are higher rank than queens")
-    (is (= [:spade :king] (play-round [:spade :king] [:club :queen])))
+    (is (= 0 (play-round [:spade :king] [:club :queen])))
   (testing "aces are higher rank than kings")
-    (is (= [:spade :ace] (play-round [:spade :ace] [:club :king])))
+    (is (= 0 (play-round [:spade :ace] [:club :king])))
   (testing "if the ranks are equal, clubs beat spades")
-    (is (= [:club :ace] (play-round [:spade :ace] [:club :ace])))
+    (is (= 1 (play-round [:spade :ace] [:club :ace])))
   (testing "if the ranks are equal, diamonds beat clubs")
-    (is (= [:diamond :ace] (play-round [:diamond :ace] [:club :ace])))
+    (is (= 0 (play-round [:diamond :ace] [:club :ace])))
   (testing "if the ranks are equal, hearts beat diamonds")
-    (is (= [:heart :ace] (play-round [:diamond :ace] [:heart :ace]))))
+    (is (= 1 (play-round [:diamond :ace] [:heart :ace]))))
 
 (deftest test-play-game
-  (testing "the player loses when they run out of cards")
-    (is (= "Player 2" (play-game (first (partition 26 cards)) (last (partition 26 cards)))))
+  (testing "the player with only one card loses"
+    (is (= 1 (play-game (take 1 cards) (drop 1 cards)))))
+  (testing "game between first and last 26 cards"
+    (is (= 1 (play-game (take 26 cards) (drop 26 cards)))))
+  (testing "player with all the aces wins the game"
+    (let [aces (filter #(= :ace (last %)) cards)
+          non-aces (filter #(not= :ace (last %)) cards)]
+      (is (= 1 (play-game non-aces aces)))))
   )
