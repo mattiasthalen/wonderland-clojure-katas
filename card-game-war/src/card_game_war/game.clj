@@ -9,18 +9,6 @@
         rank ranks]
     [suit rank]))
 
-;shuffled deck
-(def shuffled-deck (seq (shuffle cards)))
-
-;generate player1 hand
-(def player1-cards
-  (take-nth 2 shuffled-deck))
-
-;generate player2 hand
-(def player2-cards
-  ;return cards filtered by cards not in player1's hand
-  (filter (fn [x] (not (contains? (set player1-cards) x))) shuffled-deck))
-
 ;which hand wins?
 (defn play-round [player1-card player2-card]
   (let [ ;get scores for card
@@ -38,7 +26,7 @@
     ;Return winner
     ;check if the cards have the same rank
     (if (= p1-rank-score p2-rank-score)
-      ;if they do, check the suit score
+      ;if they do, who has the highest suit
       (if (> p1-suit-score p2-suit-score) 0 1)
       ;if not, who has the highest rank
       (if (> p1-rank-score p2-rank-score) 0 1))))
